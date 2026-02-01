@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.utils import verify_password
 from app.crud.user import user_crud
-from app.models.user import User
+from app.models import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
 
@@ -19,7 +19,10 @@ def create_access_token(
         subject: str,
         expires_minutes: int = settings.access_token_expire_minutes
 ) -> str:
-    expire = datetime.now(tz=timezone.utc) + timedelta(minutes=expires_minutes)
+    expire = (
+        datetime.now(tz=timezone.utc)
+        + timedelta(minutes=expires_minutes)
+    )
     to_encode = {'exp': expire, 'sub': str(subject)}
     return jwt.encode(
         to_encode,

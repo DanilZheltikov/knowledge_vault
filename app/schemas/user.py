@@ -11,10 +11,14 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserRead(BaseModel):
+class UserUpdate(BaseModel):
+    is_active: bool
+    is_staff: bool
+
+
+class UserRead(UserUpdate):
     id: int
     email: EmailStr
-    is_active: bool
 
     model_config = ConfigDict(
         from_attributes=True
