@@ -40,7 +40,7 @@ async def remove_user(
     session: SessionDep
 ):
     user = await user_crud.get(user_id, session)
-    user = await user_crud.remove(user,session)
+    user = await user_crud.remove(user, session)
     return user
 
 
