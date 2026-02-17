@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from hashlib import sha256
 
 import jwt
 
@@ -9,26 +10,68 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.utils import verify_password
+from app.crud.refresh_token import refresh_token_crud
 from app.crud.user import user_crud
 from app.models import User
+from app.schemas.token import RefreshToken
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
 
 
+def create_jwt(token_type: str, token_data: dict) -> str:
+    jwt_payload = {
+        'token_type': token_type,
+        'iat': datetime.now(tz=timezone.utc)
+    }
+    jwt_payload.update(token_data)
+    return jwt.encode(
+        payload=jwt_payload,
+        key=settings.secret_key,
+        algorithm=settings.algorithm
+    )
+
+
 def create_access_token(
-        subject: str,
-        expires_minutes: int = settings.access_token_expire_minutes
+    subject: str,
+    expires_minutes: int = settings.access_token_expire_minutes
 ) -> str:
     expire = (
         datetime.now(tz=timezone.utc)
         + timedelta(minutes=expires_minutes)
     )
-    to_encode = {'exp': expire, 'sub': str(subject)}
-    return jwt.encode(
-        to_encode,
-        settings.secret_key,
-        algorithm=settings.algorithm,
+    jwt_payload = {
+        'exp': expire,
+        'sub': subject
+    }
+
+    return create_jwt(token_type='access', token_data=jwt_payload)
+
+
+async def create_refresh_token(
+    subject: str,
+    session: AsyncSession,
+    expires_minutes: int = settings.refresh_token_expire_minutes
+) -> str:
+    expire = (
+        datetime.now(tz=timezone.utc)
+        + timedelta(minutes=expires_minutes)
     )
+    jwt_payload = {
+        'exp': expire,
+        'sub': subject
+    }
+    refresh_token = create_jwt(token_type='refresh', token_data=jwt_payload)
+    user = await user_crud.get_user_by_email(email=subject, session=session)
+
+    await refresh_token_crud.create(
+        obj_in=RefreshToken(
+            user_id=user.id,
+            hashed_token=sha256(refresh_token.encode()).hexdigest(),
+            expires=expire
+        ),
+        session=session
+    )
+    return refresh_token
 
 
 async def authenticate_user_from_token(

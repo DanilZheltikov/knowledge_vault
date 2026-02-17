@@ -13,8 +13,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(150), unique=True)
     hashed_password: Mapped[str]
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_stuff: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     refresh_token: Mapped['RefreshToken'] = relationship(
         back_populates='user',
-        cascade='delete'
+        cascade='all, delete-orphan'
     )

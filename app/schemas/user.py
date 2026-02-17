@@ -13,7 +13,7 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     is_active: bool
-    is_stuff: bool
+    is_admin: bool
 
 
 class UserRead(UserUpdate):
