@@ -4,13 +4,16 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Token(BaseModel):
+class AccessToken(BaseModel):
     access_token: str
-    refresh_token: Optional[str] = None
     token_type: str = 'bearer'
 
 
-class RefreshToken(BaseModel):
+class Token(AccessToken):
+    refresh_token: Optional[str] = None
+
+
+class RefreshTokenCreate(BaseModel):
     hashed_token: str
     user_id: int
     expires: datetime
